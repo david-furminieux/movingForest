@@ -1,0 +1,29 @@
+[loggers]
+keys=root, stream
+
+[handlers]
+keys=consoleHandler
+
+[formatters]
+keys=simpleFormatter
+
+[logger_root]
+level=NOTSET
+handlers=consoleHandler
+qualname=.
+
+[logger_stream]
+level=DEBUG
+handlers=consoleHandler
+qualname=taj.runner.singlethread.StreamVisitor
+propagate=0
+
+[handler_consoleHandler]
+class=StreamHandler
+formatter=simpleFormatter
+args=(sys.stderr,)
+
+[formatter_simpleFormatter]
+format=%(asctime)s[%(levelname)s]%(name)s: %(message)s
+datefmt=%Y-%m-%dT%H:%M:%S
+
