@@ -1,0 +1,94 @@
+#!/usr/bin/python
+# -*- python -*-
+# -*- coding: utf-8 -*-
+from argparse import ArgumentParser
+from logging import basicConfig, getLogger, _levelNames
+from taj.runner.singlethread import SingleThreadedRunner
+import codecs
+import logging
+import logging.config as logConf
+import signal
+import sys
+
+def __reimportSysForEncoding():
+    '''
+    reimport sys lib and sets default encoding to utf8,
+    because of deleted setdefaultencoding method in site.py
+    '''
+    import sys
+    reload(sys)
+    method = getattr(sys, 'setdefaultencoding')
+    method('utf-8')
+
+__reimportSysForEncoding()
+
+runner = None
+'''
+this is the running interpreter.
+'''
+
+def sigHandler(sig, bla):
+    '''
+    handler that will get called when SIGINT is catched
+    '''
+    if runner is not None:
+        if sig == signal.SIGINT:
+            runner.interupt()
+
+def _craftArgumentParser():
+    '''
+    define what options may be passed to the moving forest environment.
+    '''
+    parser = ArgumentParser(description="MovingForest: a hirachical event stream processor")
+    parser.add_argument('-d', '--debuglevel',
+                        choices=['DEBUG', 'INFO', 'WARN', 'ERROR',
+                                 'CRITICAL', 'NONE'],
+                        default='WARN')
+    parser.add_argument('-l', '--logconf', default='./etc/log.conf')
+#    
+    parser.add_argument('-f', '--scriptfile', default='./etc/config')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1a')
+
+    return parser
+
+def start():
+    '''
+    main entry point in the system.
+    '''
+    global runner
+    
+    signal.signal(signal.SIGINT, sigHandler)
+    parser = _craftArgumentParser()
+    args = parser.parse_args()
+    
+    try:
+        basicConfig(level=logging.NOTSET)
+        confFile = open(args.logconf)
+        logConf.fileConfig(confFile)
+        confFile.close()
+    except IOError, msg:
+        print msg
+        pass
+    
+    log = getLogger(__name__)
+
+    runner = SingleThreadedRunner()
+    log.info('system starting')
+
+#    try:
+#        goals = parseMFQL(args.scriptfile)
+#    except IOError, (_, msg):
+#        print >>sys.stderr, "while reading mfql file %s : %s" % (args.scriptfile, msg)
+#        exit(1)
+
+    input =  codecs.open(args.scriptfile)
+    runner.init(input, {})
+    input.close()
+
+    runner.start()
+    runner.run()
+    runner.stop()
+    runner.shutdown()
+    
+if __name__ == '__main__':
+    start()

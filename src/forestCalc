@@ -1,0 +1,48 @@
+#!/usr/bin/python
+
+from taj.parser.MFQLLexer import MFQLLexer
+from taj.parser.MFQLParser import MFQLParser
+import antlr3
+
+def parse(text):
+
+    if text[0] == 'P':
+        predicate = True
+        text = text[1:]
+    else:
+        predicate = False
+    
+    char_stream = antlr3.ANTLRStringStream(text)
+    lexer = MFQLLexer(char_stream)
+    tokens = antlr3.CommonTokenStream(lexer)
+    parser = MFQLParser(tokens)
+
+    if predicate:
+        result = parser.predicate()
+        parser.eof()
+    else:
+        result = parser.expr()
+        parser.eof()
+    
+    return result
+
+def process(text):
+    
+    ast = parse(text)
+    print ast
+
+def start():
+    
+    while True:
+        try:
+            text = raw_input('$>')
+        except EOFError:
+            text = 'bye'
+            
+        if text == 'bye':
+            return
+        
+        process(text)
+
+if __name__ == '__main__':
+    start()

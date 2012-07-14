@@ -1,0 +1,22 @@
+#!/usr/bin/env mforest -f
+###############################################################################
+# An example MFQL
+#
+
+CREATE INPUT STREAM stdin (
+  file         = '/dev/stdin',
+  synchronized = FALSE,
+  encoding = 'utf8',
+  timezone = 'Europe/Berlin'
+);
+
+CREATE OUTPUT STREAM stdout (
+  file         = '/dev/stdout',
+  synchronized = FALSE
+);
+
+CREATE TABLE buffer AS SELECT * FROM stdin WHERE a = 3;
+
+UPDATE buffer SET c = a + b DROP b WHERE b = 4;
+
+INSERT INTO stdout SELECT a AS b, c*a AS b.e, c AS f FROM buffer;
