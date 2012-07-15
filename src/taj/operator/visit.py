@@ -18,6 +18,15 @@ class JoinBuilder(QueryVisitor):
         self._lastStrName = None
         self.__expr       = AccessExtractor()
         self.__activeExpr = False # should the acessExtractor visit
+        self.__newName    = False # should the next expression be interpreted as a name
+        self.__lastRel    = None  # last impl of relation visited
+
+        self._props       = {}
+        self._toStart     = []
+        
+    def init(self, props):
+        self._props = props
+        self.__expr.init(props)
 
     def getResult(self):
         '''
@@ -39,28 +48,33 @@ class JoinBuilder(QueryVisitor):
             raise IllegalCondition("getInputRelations without entering relation")
         return self.__inputs
     
+    def getOperatorsToBeStarted(self):
+        return self._toStart
+    
     def enterSourceRelation(self):
         self.__acc    = []
         self.__inputs = list()
         
-    def enterSimpleRelation(self, name):
-        rel = RelationProxy()
-        rel.setName(name)
-        self.__acc.append(rel)
-        self.__inputs.append((name, rel))
-    
-    def enterSimpleStream(self, name):
-        self._lastStrName = name
-        raise NotImplementedError()
+    def enterSimpleRelOrStrRef(self, name):
+        proxy = RelationProxy()
+        self._toStart.append(proxy)
+        proxy.init(self._props)
+        self.__lastRel = proxy
+        self.__lastRel.setName(name)
+        self.__acc.append(self.__lastRel)
+        self.__inputs.append((name, self.__lastRel))
     
     def enterRelationRename(self):
-        pass
+        self.__newName = True
     
     def leaveRelationRename(self):
-        pass
+        self.__lastRel.setName(self.__newName)
+        self.__newName = False
     
     def enterTimedWindow(self, time):
         win = TimedWindowOperator()
+        self._toStart.append(win)
+        win.init(self._props)
         win.setTime(time)
         win.setName(self._lastStrName)
         self._lastStrName = None
@@ -69,6 +83,8 @@ class JoinBuilder(QueryVisitor):
     
     def enterAmountWindow(self, amount):
         win = AmountWindowOperator()
+        win.init(self._props)
+        self._toStart.append(win)
         win.setAmount(amount)
         win.setName(self._lastStrName)
         self._lastStrName = None
@@ -78,7 +94,11 @@ class JoinBuilder(QueryVisitor):
     def enterRelationComposition(self):
         self.__activeExpr = True
         self.__expr.reset()
-        self.__acc.append(BinaryJoin())
+        
+        join = BinaryJoin()
+        join.init(self._props)
+        self._toStart.append(join)
+        self.__acc.append(join)
 
     def leaveRelationComposition(self):
         self.__activeExpr = False
@@ -93,6 +113,8 @@ class JoinBuilder(QueryVisitor):
         logic.walk(self.__expr)
     
     def acceptExpression(self, expr):
+        if self.__newName is True:
+            self.__newName = expr
         if not self.__activeExpr: return
         expr.walk(self.__expr)
     
@@ -104,6 +126,10 @@ class AccessExtractor(LogicVisitor, ExpressionVisitor):
 
     def __init__(self):
         super(AccessExtractor, self).__init__()
+        self._props = {}
+    
+    def init(self, props):
+        self._props = props
 
     def reset(self):
         '''

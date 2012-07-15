@@ -16,8 +16,6 @@ class UnboundWindow(StreamRelationOperator):
         if op == StreamListener.HEART_BEAT:
             self._notifyListener(tree, RelationListener.HEART_BEAT, time)
             return
-        
-        self._log.debug('accepted tree %s', tree)
         self._notifyListener(tree, RelationListener.ADDITION, time)
 
 class TimedWindowOperator(StreamRelationOperator):

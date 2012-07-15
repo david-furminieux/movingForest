@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
         
         self._runner.init('''
           INSERT INTO out SELECT * from stream1; 
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
         self._runner.init('''
           CREATE TABLE buffer AS SELECT * FROM stream1;
           INSERT INTO out SELECT * from buffer; 
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
           UPDATE buffer SET c = a + b DROP b WHERE b = 4;
           DELETE FROM buffer WHERE c=7;
           INSERT INTO stdout SELECT a AS b, c*a AS a.e, c AS f FROM buffer;
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
@@ -127,7 +127,7 @@ class Test(unittest.TestCase):
           CREATE TABLE buffer AS SELECT * FROM stdin;
           INSERT INTO stdout SELECT * FROM buffer;
           INSERT INTO stdout SELECT * FROM buffer;
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
@@ -148,7 +148,7 @@ class Test(unittest.TestCase):
 #        self._runner.init('''
 #          CREATE TABLE buffer AS SELECT * FROM stdin;
 #          INSERT INTO stdout SELECT SUM(b) FROM buffer GROUP BY a;
-#        ''', {})
+#        ''')
 #        self._runner.start()
 #        self._runner.run()
 #
@@ -167,12 +167,11 @@ class Test(unittest.TestCase):
         self._runner.init('''
           CREATE TABLE buffer AS SELECT * FROM input1, input2 WHERE input1.a=input2.a;
           INSERT INTO stdout SELECT * FROM buffer;
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
         result = self.extractResult(output.getvalue())
-        #print "RESULT %s" % result
         self.assertTrue(len(result)==1)
         self.assertTrue(result[0] == {'input1': {'a': 1, 'b': 2},
                                       'input2': {'a': 1, 'c': 'hello'}})
@@ -197,19 +196,44 @@ class Test(unittest.TestCase):
             *
           FROM
             input1 AS .,
-            input2 AS .c;
-          #WHERE input1.a=input2.a;
+            input2 AS .c
+          WHERE a=c.a;
           INSERT INTO stdout SELECT * FROM buffer;
-        ''', {})
+        ''')
         self._runner.start()
         self._runner.run()
 
         result = self.extractResult(output.getvalue())
         print "RESULT %s" % result
-        #self.assertTrue(len(result)==1)
-        #self.assertTrue(result[0] == {'input1': {'a': 1, 'b': 2},
-        #                              'input2': {'a': 1, 'c': 'hello'}})
-        
+        self.assertTrue(len(result)==2)
+        self.assertTrue(result[0] == {'a': 1, 'b': 2, 'c':{'a':1, 'c':'hello'}})
+        self.assertTrue(result[1] == {'a': 1, 'b': 17, 'c':{'a':1, 'c':'bla'}})
+    
+    def testBasicRowWindow(self):
+        input1 = '''
+          {"a":1}
+        '''
+        self._runner.addInputStream('input1', self._createReader(input1))
+        input2 = '''
+          {"a":1, "b":1}
+          {"a":2, "b":2}
+          {"a":1, "b":3}
+          {"a":2, "b":4}
+          {"a":1, "b":5}
+        '''
+        self._runner.addInputStream('input2', self._createReader(input2))
+        output = StringIO()
+        self._runner.addOutputStream('stdout', output)
+
+        self._runner.init('''
+          INSERT INTO stdout SELECT
+            *
+          FROM
+            input1[UNBOUNDED],
+            input2[ROWS 2]
+          WHERE
+            input1.a=input2.a;
+        ''')
 
 
 class FdIO(BufferedIOBase):

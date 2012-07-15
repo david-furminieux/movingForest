@@ -46,7 +46,38 @@ class StreamListener(object):
         '''
         raise NotImplementedError()
 
-class Forest(object):
+class LifeCycle(object):
+    '''
+    an instance of this can be managed with following lifecycle.
+    INIT (START STOP)* SHUTDOWN
+    '''
+    
+    def __init__(self):
+        super(LifeCycle, self).__init__()
+    
+    def init(self, props={}):
+        '''
+        initialize this instance using the properties
+        @param props: the propserties used to initialize this instance.
+        @type props: dict<str, any>
+        '''
+        
+    def start(self):
+        '''
+        tell this instance that the system has been started.
+        '''
+
+    def stop(self):
+        '''
+        tell this instance that the system has been stopped.
+        '''
+    
+    def shutdown(self):
+        '''
+        tell this instance that the system is going down.
+        '''
+
+class Forest(LifeCycle):
     '''
     base class for TreeStream and TreeRelation
     '''
@@ -54,25 +85,14 @@ class Forest(object):
     def __init__(self):
         super(Forest, self).__init__()
 
-    def init(self, props={}):
-        pass
-    
-    def start(self):
-        pass
-
-    def stop(self):
-        pass
-    
-    def shutdown(self):
-        pass
-
     def isStream(self):
         '''
         tell if this is an instance of TreeStream
         @return: True if self is an instance of TreeStream, False else.
         @rtype: boolean
         '''
-
+        raise NotImplementedError(type(self))
+    
 class TreeStream(Forest):
     '''
     a stream of trees.
@@ -117,6 +137,21 @@ class TreeRelation(Forest):
 
     def isStream(self):
         return False
+
+    def addIndex(self, pathLst):
+        '''
+        adds an index to this relation
+        @param pathLst: a list of pathes to be considered for each tree.
+        @type pathLst: list<Path> 
+        '''
+        raise NotImplementedError()
+    
+    def findTrees(self, pathValueLst):
+        '''
+        find all trees in this relation having 
+        @para
+        '''
+        raise NotImplementedError()
 
 class StreamAdapter(TreeStream, StreamListener):
     '''

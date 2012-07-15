@@ -1,9 +1,6 @@
 from taj.exception import InternalError
 from taj.operator.common import Filter
 from taj.path import AttributeAccess, IdxAccess
-import logging
-
-log = logging.getLogger(__name__)
 
 class DeleteManipulator(Filter):
     '''

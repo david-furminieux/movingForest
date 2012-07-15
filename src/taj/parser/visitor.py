@@ -7,6 +7,7 @@ interface definitions for AST visitors
 
 from taj.parser.base import SyntaxError
 import logging
+from taj.exception import DeprecatedUsageException
 
 class ExpressionVisitor(object):
     '''
@@ -14,6 +15,7 @@ class ExpressionVisitor(object):
     '''
     def __init__(self):
         super(ExpressionVisitor, self).__init__()
+        self._log = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
     def enterPath(self):
         '''
@@ -171,6 +173,7 @@ class LogicVisitor(object):
 
     def __init__(self):
         super(LogicVisitor, self).__init__()
+        self._log = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
     def enterComparaison(self, operator):
         '''
@@ -245,6 +248,7 @@ class QueryVisitor(object):
     
     def __init__(self):
         super(QueryVisitor, self).__init__()
+        self._log = logging.getLogger(__name__+'.'+self.__class__.__name__)
 
     def assign(self, name, value):
         '''
@@ -351,13 +355,13 @@ class QueryVisitor(object):
         leave the projection part of a statement
         '''
     
-    def enterSimpleRelation(self, name):
+    def enterSimpleRelOrStrRef(self, name):
         '''
-        a simple/base relation named <name> is been visited
-        @param name: the name of the base relation visited.
+        a simple/base relation or stream named <name> is been visited
+        @param name: the name of the base relation/stream visited.
         @type name: string 
         '''
-    
+        
     def enterAlteration(self):
         pass
 
@@ -382,9 +386,6 @@ class QueryVisitor(object):
     def leaveWindowedStream(self):
         pass
     
-    def enterSimpleStream(self, name):
-        pass
-
     def enterTimedWindow(self, time):
         pass
     

@@ -94,8 +94,6 @@ class NoneOperator(Operator):
         return None
 
     def compareAtom(self, value1, value2):
-        if value1 is None and value2 is None:
-            return 0
         return None
 
 class NumberOperator(Operator):
@@ -358,6 +356,7 @@ class StackALU(ALU):
 
     def pop(self):
         '''
+        take the upper most element from the stack.
         '''
         try:
             return self._stack.pop()
@@ -447,6 +446,10 @@ class StackALU(ALU):
         
         val2 = self.pop()
         val1 = self.pop()
+        
+        if val1 is None or val2 is None:
+            self._stack.append(False)
+        
         opr = self._getOperator(val1)
         
         if op == Comparaison.SIMILAR:

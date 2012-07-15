@@ -1,10 +1,7 @@
 from taj.operator.common import RelationRelationOperator
-import logging
 from taj.path import AttributeAccess, IdxAccess
 from taj.exception import InternalError
 from taj.core import RelationListener
-
-log = logging.getLogger(__name__)
 
 class ProjectionOperator(RelationRelationOperator):
     '''

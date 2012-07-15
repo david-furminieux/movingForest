@@ -17,8 +17,8 @@ class JSONAdapter(StreamAdapter):
             raise StopIteration()
         try:
             msg = deserialize(txt)
-            log.debug('======================================================')
-            log.debug('received %s' % msg)
+            #log.debug('======================================================')
+            #log.debug('received %s' % msg)
             self._notifyListener(msg, StreamListener.EVENT, datetime.now())
             return msg
         except ValueError, msg:

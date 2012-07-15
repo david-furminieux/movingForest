@@ -1,6 +1,5 @@
 from taj.exception import InternalError, InconsistentPredicateException
 from taj.parser.visitor import ExpressionVisitor, LogicVisitor
-from taj.logic import Comparaison
 from taj.path import IdxAccess, AttributeAccess
 
 class ExpressionEvalBuilder(ExpressionVisitor):
@@ -65,10 +64,6 @@ class ExpressionEvalBuilder(ExpressionVisitor):
             self._ops.append(lambda tree: self._alu.sub())
     
     def enterProduct(self):
-#        def pushOne(stack):
-#            stack.push(1)
-#            return stack
-#        self._ops.append(lambda tree: pushOne(self._alu))
         self._firstStack.append(True)
 
     def leaveProduct(self):
@@ -196,8 +191,8 @@ class LogicBuilder(LogicVisitor):
             raise InternalError()
     
     def leaveIsNull(self):
-        self._ops.append(lambda tree: self._alu.push(None))
-        self._ops.append(lambda tree: self._alu.compare(Comparaison.EQUAL))
+        alu = self._alu
+        self._ops.append(lambda tree: alu.push(alu.pop() is None))
     
     def enterIsKey(self):
         self._isKeyCheck = True

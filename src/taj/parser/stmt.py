@@ -111,7 +111,7 @@ class SimpleRelation(Relation):
         return self._name
 
     def walk(self, visitor):
-        visitor.enterSimpleRelation(self._name)
+        visitor.enterSimpleRelOrStrRef(self._name)
 
 class Window(ASTNode):
     '''
@@ -186,7 +186,7 @@ class SimpleStream(Stream):
         self._name = name
     
     def walk(self, visitor):
-        visitor.enterSimpleStream(self._name)
+        visitor.enterSimpleRelOrStrRef(self._name)
     
 class SelectStatement(Statement, Relation):
     '''

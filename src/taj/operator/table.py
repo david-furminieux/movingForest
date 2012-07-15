@@ -21,7 +21,6 @@ class RelationProxy(RelationRelationOperator):
         return self._name
     
     def notifyTree(self, tree, op, time):
-        self._log.debug('accepted %s:%d' % (tree, op))
         self._notifyListener(tree, op, time)
 
 class TableOperator(RelationRelationOperator):
@@ -44,6 +43,7 @@ class TableOperator(RelationRelationOperator):
         self.filters.append(filter)
     
     def addListener(self, listener):
+        self._log.debug('adding listener %s' % listener)
         if isinstance(listener, StreamAdapter):
             tmp = StreamWriter()
             tmp.init(listener)
@@ -51,8 +51,6 @@ class TableOperator(RelationRelationOperator):
         super(TableOperator, self).addListener(listener)
 
     def notifyTree(self, tree, op, time):
-        self._log.debug('received %s:%d' % (tree, op))
-
         if op==RelationListener.HEART_BEAT:
             self._notifyListener(tree, op, time)
             return
@@ -62,10 +60,6 @@ class TableOperator(RelationRelationOperator):
             (flag, tree) = flag and filter.apply(tree)
             if not flag:
                 break
-        if flag:
-            self._log.debug('decided to pass')
-        else:
-            self._log.debug('decided to block')
         if flag:
             self._notifyListener(tree, op, time)
 
