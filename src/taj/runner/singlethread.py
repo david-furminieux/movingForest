@@ -3,7 +3,7 @@ from taj.adapter.json_ad import JSONAdapter
 from taj.alu.any import StackALU
 from taj.alu.visit import LogicBuilder, ExpressionEvalBuilder
 from taj.core import Runner, StreamListener
-from taj.exception import IllegalCondition, InternalError
+from taj.exception import IllegalCondition, InternalError, TransportException
 from taj.operator.manipulator import UpdateManipulator, DeleteManipulator
 from taj.operator.projection import ProjectionOperator
 from taj.operator.selection import SelectionOperator
@@ -16,20 +16,24 @@ from taj.parser.MFQLParser import MFQLParser
 from taj.parser.stmt import StreamCreationStatement
 from taj.parser.visitor import TracingVisitor, CompositeVisitor, QueryVisitor, \
     IsKeyValidator
+from taj.transport.file import FileTransport
+from taj.transport.unix import UnixSocketTransport
 import antlr3
 import logging
 import select
 import sys
+from taj.transport.process import SubProcessTransport
+
 
 KNOWN_ADAPTERS = {
   'JSON': JSONAdapter,
   'CSV':  CSVAdapter
 }
 
-SPECIAL_STREAMS = {
-  '/dev/stdin':  sys.__stdin__,
-  '/dev/stdout': sys.__stdout__,
-  '/dev/stderr': sys.__stderr__
+KNOWN_DRIVERS = {
+  'file': FileTransport,
+  'usocket': UnixSocketTransport,
+  'subprocess': SubProcessTransport
 }
 
 class RelationVisitor(QueryVisitor):
@@ -210,7 +214,6 @@ class StreamVisitor(QueryVisitor):
         super(StreamVisitor, self).__init__()
         self._log = logging.getLogger(__name__+'.'+self.__class__.__name__)
         self._repos = streamRep
-        self._fileNames = set()
         self._log.debug('stream visitor created')
 
     def getOption(self, options, key, default=None):
@@ -223,47 +226,37 @@ class StreamVisitor(QueryVisitor):
             return default 
     
     def enterStreamCreation(self, name, type, options):
-        self._log.debug('tring to create stream %s' % name)
+        self._log.debug('tring to create stream %s[%s]' % (name, type))
 
-        # determine in which writing mode this file should be opened
-        if type == StreamCreationStatement.INPUT:
-            mode = 'r'
-        else:
-            mode = 'a'
-        
-        # what is the name of the file, and is it already open.
-        fileName    = self.getOption(options, 'file')
-        if fileName is None:
-            self._log.warning('stream "%s" has no "file" property. skipping'
-                              % name)
-            return
-        if fileName in self._fileNames:
-            self._log.warning(('stream "%s" uses a file which is already in'
-                               +' use, skipping') % name)
-            return
-        self._fileNames.add(fileName)
+        for key, value in options.iteritems():
+            self._log.debug(' OPTION %s => %s' % (key, value))
 
-        origStream = None
-        if SPECIAL_STREAMS.has_key(fileName):
-            origStream = SPECIAL_STREAMS[fileName] 
-        else:
-            try:
-                origStream = open(fileName, mode)
-            except IOError, (code,msg):
-                self._log.error('stream "%s" with file "%s"' % (name, fileName))
-                self._log.exception((code, msg))
-                return
+        driver = self.getOption(options, 'driver')
+        driver = driver.lower()
+        if driver is None:
+            self._log.warning('stream "%s" has no driver property assuming file' % name)
+            driver = 'file'
+
+        if not KNOWN_DRIVERS.has_key(driver):
+            self._log.error('stream "%s" has unrecognized driver "%s" skipping' % (name, driver))
+            return
+
+        try:
+            driver = KNOWN_DRIVERS[driver](name, type, options)
+        except TransportException, ex:
+            self._log.error('while initializing "%s" %s' % (name, ex))
+            return
 
         # determine and instantiate the adapter.
         adapterType = self.getOption(options, 'adapter', 'json').upper()      
 
         try:
             if type == StreamCreationStatement.INPUT:
-                self._repos.addInputStream(name, origStream, adapterType, options)
+                self._repos.addInputStream(name, driver, adapterType, options)
             else:
-                self._repos.addOutputStream(name, origStream, adapterType, options)
+                self._repos.addOutputStream(name, driver, adapterType, options)
         except IllegalCondition, msg:
-            origStream.close()
+            driver.close()
             raise msg
 
 class FilterVisitor(QueryVisitor):

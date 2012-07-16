@@ -23,8 +23,11 @@ class JSONAdapter(StreamAdapter):
             return msg
         except ValueError, msg:
             if str(msg) != 'empty JSON description':
-                print '"%s"' % txt
+                log.error('while decoding "%s"' % txt)
+                print 'while decoding "%s"' % txt
                 log.exception(msg)
+            else:
+                log.warning('while decoding "%s"' % txt)
     
     def write(self, msg):
         txt = serialize(msg)+'\n'

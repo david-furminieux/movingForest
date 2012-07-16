@@ -1,4 +1,5 @@
 from taj.exception import IllegalCondition
+import logging
 
 class RelationListener(object):
     '''
@@ -204,7 +205,46 @@ class StreamAdapter(TreeStream, StreamListener):
     
     def generateHeartBeat(self, time):
         raise NotImplementedError()
+
+class Transport(object):
+    '''
+    an instance of this is able to tranport encoded outgoing or incomming events.
+    '''
     
+    def __init__(self, name, direction, options):
+        '''
+        @param name: the name of the stream using this transport.
+        @type name: string  
+        @param direction: wich direction has the transport. one of
+            StreamCreationStatement.INPUT or StreamCreationStatement.OUTPUT
+        @type direction: int
+        @param options: configuration option for the transport
+        @type options: dict<string, any>  
+        '''
+        self._log = logging.getLogger(__name__+'.'+self.__class__.__name__)
+        self._stream = None
+
+    def getOption(self, options, key, default=None):
+        try:
+            tmp = options[key]
+            if hasattr(tmp, 'getValue'):
+                tmp = tmp.getValue()
+            return tmp
+        except KeyError:
+            return default
+    
+    def fileno(self):
+        return self._stream.fileno()
+    
+    def readline(self, size=-1):
+        return self._stream.readline(size)
+    
+    def write(self, str):
+        return self._stream.write(str)
+    
+    def close(self):
+        self._stream.close()
+
 class Runner(object):
     '''
     an interface for all objects capable of running a query plan.

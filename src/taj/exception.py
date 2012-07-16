@@ -57,6 +57,11 @@ class LogicException(TAJException):
     some issues occurred while computing a logical expression.
     '''
 
+class TransportException(TAJException):
+    '''
+    some issues have occured while initializing or using a transport
+    '''
+
 class DeprecatedUsageException(DeprecationWarning, TAJException):
     '''
     some elements a used which may not be used anymore.
