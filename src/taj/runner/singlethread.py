@@ -232,10 +232,10 @@ class StreamVisitor(QueryVisitor):
             self._log.debug(' OPTION %s => %s' % (key, value))
 
         driver = self.getOption(options, 'driver')
-        driver = driver.lower()
         if driver is None:
             self._log.warning('stream "%s" has no driver property assuming file' % name)
             driver = 'file'
+        driver = driver.lower()
 
         if not KNOWN_DRIVERS.has_key(driver):
             self._log.error('stream "%s" has unrecognized driver "%s" skipping' % (name, driver))
