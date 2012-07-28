@@ -265,15 +265,15 @@ class QueryVisitor(object):
         leaves a table creation.
         '''
 
-    def enterStreamCreation(self, name, type, options):
+    def enterStreamCreation(self, name, strType, options):
         '''
         enter a stream creation declaration
         @param name: the name of the created stream.
-        @type name: string
-        @param type: is it an input or an output stream
-        @type: int
+        @strType name: string
+        @param strType: is it an input or an output stream
+        @strType: int
         @param options: the options for the stream
-        @type options: dict
+        @strType options: dict
         '''
 
     def leaveStreamCreation(self):

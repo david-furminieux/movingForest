@@ -21,7 +21,6 @@ from taj.transport.unix import UnixSocketTransport
 import antlr3
 import logging
 import select
-import sys
 from taj.transport.process import SubProcessTransport
 
 
@@ -31,8 +30,8 @@ KNOWN_ADAPTERS = {
 }
 
 KNOWN_DRIVERS = {
-  'file': FileTransport,
-  'usocket': UnixSocketTransport,
+  'file':       FileTransport,
+  'usocket':    UnixSocketTransport,
   'subprocess': SubProcessTransport
 }
 
@@ -225,8 +224,8 @@ class StreamVisitor(QueryVisitor):
         except KeyError:
             return default 
     
-    def enterStreamCreation(self, name, type, options):
-        self._log.debug('tring to create stream %s[%s]' % (name, type))
+    def enterStreamCreation(self, name, strType, options):
+        self._log.debug('tring to create stream %s[%s]' % (name, strType))
 
         for key, value in options.iteritems():
             self._log.debug(' OPTION %s => %s' % (key, value))
@@ -242,7 +241,7 @@ class StreamVisitor(QueryVisitor):
             return
 
         try:
-            driver = KNOWN_DRIVERS[driver](name, type, options)
+            driver = KNOWN_DRIVERS[driver](name, strType, options)
         except TransportException, ex:
             self._log.error('while initializing "%s" %s' % (name, ex))
             return
@@ -251,7 +250,7 @@ class StreamVisitor(QueryVisitor):
         adapterType = self.getOption(options, 'adapter', 'json').upper()      
 
         try:
-            if type == StreamCreationStatement.INPUT:
+            if strType == StreamCreationStatement.INPUT:
                 self._repos.addInputStream(name, driver, adapterType, options)
             else:
                 self._repos.addOutputStream(name, driver, adapterType, options)
@@ -448,20 +447,20 @@ class SingleThreadedRunner(Runner, QueryVisitor):
         self._log.info('--------- AST VISIT TERMINATED ---------')
         self._secondPassVisit(queryPlan, props)
 
-    def parseMFQL(self, input):
+    def parseMFQL(self, content):
         '''
         parse a MFQL source file an return a list of Statements.
-        @param input: the name of the file to be parsed or directly an file
+        @param content: the name of the file to be parsed or directly an file
                       object.
-        @type input: string || file.
+        @type content: string || file.
         @return: the list of statements.
         @rtype: list<Statement>
         '''
         
-        if isinstance(input, str) or isinstance(input, unicode):
-            stream = antlr3.ANTLRStringStream(input)
+        if isinstance(content, str) or isinstance(content, unicode):
+            stream = antlr3.ANTLRStringStream(content)
         else:
-            stream = antlr3.ANTLRInputStream(input)
+            stream = antlr3.ANTLRInputStream(content)
 
         lexer = MFQLLexer(stream)
         tokens = antlr3.CommonTokenStream(lexer)
@@ -535,8 +534,8 @@ class SingleThreadedRunner(Runner, QueryVisitor):
         
         unbound = self._relations
         self._relations = dict()
-        for (name, str) in self._istreams.iteritems():
-            self._relations[name] = str
+        for (name, stream) in self._istreams.iteritems():
+            self._relations[name] = stream
         
         found = False
         while len(unbound)>0:

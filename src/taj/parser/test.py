@@ -21,8 +21,8 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def parse(self, rule, input):
-        char_stream = antlr3.ANTLRStringStream(input)
+    def parse(self, rule, inputStr):
+        char_stream = antlr3.ANTLRStringStream(inputStr)
         lexer = MFQLLexer(char_stream)
         tokens = antlr3.CommonTokenStream(lexer)
         parser = MFQLParser(tokens)
@@ -43,18 +43,18 @@ class Test(unittest.TestCase):
         return result
 
     def testConstants(self):
-        int = self.parse('constant', '-1')
-        self.assertTrue(isinstance(int, Integer))
-        self.assertTrue(int.getValue() == -1)
+        intVal = self.parse('constant', '-1')
+        self.assertTrue(isinstance(intVal, Integer))
+        self.assertTrue(intVal.getValue() == -1)
         
-        float = self.parse('constant', '1.2')
-        self.assertTrue(isinstance(float, Float))
-        # yes I know about float comparaison
-        self.assertTrue(float.getValue() == 1.2)
+        floatVal = self.parse('constant', '1.2')
+        self.assertTrue(isinstance(floatVal, Float))
+        # yes I know about floatVal comparaison
+        self.assertTrue(floatVal.getValue() == 1.2)
         
-        bool = self.parse('constant', 'TRUE')
-        self.assertTrue(isinstance(bool, Boolean))
-        self.assertTrue(bool.getValue())
+        boolVal = self.parse('constant', 'TRUE')
+        self.assertTrue(isinstance(boolVal, Boolean))
+        self.assertTrue(boolVal.getValue())
         
         string = self.parse('constant', "'BLA\"'")
         self.assertTrue(isinstance(string, String))
@@ -394,8 +394,8 @@ class Test(unittest.TestCase):
         stmt = result[0]
         self.assertTrue(isinstance(stmt, UpdateStatement))
 
-    def testUpdateDrop(self):
-        result = self.parse('stmts', 'UPDATE buffer SET a = 1 DROP c WHERE b = 2;')
+#    def testUpdateDrop(self):
+#        result = self.parse('stmts', 'UPDATE buffer SET a = 1 DROP c WHERE b = 2;')
 
     def testBasicInsert(self):
         result = self.parse('stmts', 'INSERT INTO stdout SELECT * FROM buff;')
@@ -419,14 +419,15 @@ class Test(unittest.TestCase):
     
     def testJoin(self):
         
-        result = self.parse('stmts', '''
-          SELECT
-            *
-          FROM
-            table1 AS t1,
-            stream1[ROWS 10] AS t1.bla,
-            stream2[NOW] AS blup;
-        ''')
+#        result = self.parse('stmts', '''
+#          SELECT
+#            *
+#          FROM
+#            table1 AS t1,
+#            stream1[ROWS 10] AS t1.bla,
+#            stream2[NOW] AS blup;
+#        ''')
+        pass
     
 #    def testGroupBy(self):
 #        result = self.parse('stmts', '''

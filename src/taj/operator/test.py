@@ -2,7 +2,7 @@ from cStringIO import StringIO
 from io import BufferedIOBase
 from logging import basicConfig, getLogger
 from os import fork, pipe, close, write, read, _exit
-from simplejson import loads
+from anyjson import deserialize
 from taj.runner.singlethread import SingleThreadedRunner
 import logging
 import logging.config as logConf
@@ -32,12 +32,12 @@ class Test(unittest.TestCase):
         self._runner.shutdown()
 
     def _createReader(self, string):
-        input = StringIO(string)
+        inputStr = StringIO(string)
         (reader, writer) = pipe()
         if fork()==0:
             # we are the child
             close(reader)
-            for line in input:
+            for line in inputStr:
                 write(writer, line)
             close(writer)
             _exit(0)
@@ -45,21 +45,21 @@ class Test(unittest.TestCase):
             close(writer)
             return FdIO(reader)
     
-    def extractResult(self, buffer):
+    def extractResult(self, strBuffer):
         result = []
-        idx = buffer.find('\n')
+        idx = strBuffer.find('\n')
         last = 0
         while idx != -1:
-            result.append(loads(buffer[last:idx]))
+            result.append(deserialize(strBuffer[last:idx]))
             last = idx+1
-            idx = buffer.find('\n', last)
+            idx = strBuffer.find('\n', last)
         return result
 
     def testPassThrough(self):
-        input = '''
+        inputStr = '''
           {"a":1, "b":2}
         '''
-        self._runner.addInputStream('stream1', self._createReader(input))
+        self._runner.addInputStream('stream1', self._createReader(inputStr))
         output = StringIO()
         self._runner.addOutputStream('out', output)
         
@@ -74,10 +74,10 @@ class Test(unittest.TestCase):
         self.assertTrue(result[0]=={ 'a':1, 'b':2})
     
     def testCreateTable(self):
-        input = '''
+        inputStr = '''
           {"a":1, "b":2}
         '''
-        self._runner.addInputStream('stream1', self._createReader(input))
+        self._runner.addInputStream('stream1', self._createReader(inputStr))
         output = StringIO()
         self._runner.addOutputStream('out', output)
         
@@ -93,12 +93,12 @@ class Test(unittest.TestCase):
         self.assertTrue(result[0] == {'a':1, 'b':2})
 
     def testSimpleScenario(self):
-        input = '''
+        inputStr = '''
           {"a":1, "b":2}
           {"a":3, "b":2}
           {"a":3, "b":4}
         '''
-        self._runner.addInputStream('stdin', self._createReader(input))
+        self._runner.addInputStream('stdin', self._createReader(inputStr))
         output = StringIO()
         self._runner.addOutputStream('stdout', output)
         
@@ -116,10 +116,10 @@ class Test(unittest.TestCase):
         self.assertTrue(result[0]=={'a': {'e': None}, 'b': 3, 'f': None})
 
     def testDoubleInsert(self):
-        input = '''
+        inputStr = '''
           {"a":1, "b":2}
         '''
-        self._runner.addInputStream('stdin', self._createReader(input))
+        self._runner.addInputStream('stdin', self._createReader(inputStr))
         output = StringIO()
         self._runner.addOutputStream('stdout', output)
         
@@ -137,11 +137,11 @@ class Test(unittest.TestCase):
         self.assertTrue(result[1]=={'a': 1, 'b': 2})
 
 #    def testBasicGroupBy(self):
-#        input = '''
+#        inputStr = '''
 #          {"a":1, "b":2}
 #          {"a":2, "b":2}
 #        '''
-#        self._runner.addInputStream('stdin', self._createReader(input))
+#        self._runner.addInputStream('stdin', self._createReader(inputStr))
 #        output = StringIO()
 #        self._runner.addOutputStream('stdout', output)
 #        
