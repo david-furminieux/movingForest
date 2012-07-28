@@ -432,7 +432,7 @@ class SingleThreadedRunner(Runner, QueryVisitor):
         self._interupted = False # has the system been interupted.
         self._inserts    = None  # what inserts should the system realtize
         
-    def init(self, script, props):
+    def init(self, script, props={}):
         '''
         initialize the interpreter.
         @see Runner#init

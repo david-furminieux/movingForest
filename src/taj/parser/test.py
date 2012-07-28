@@ -394,8 +394,11 @@ class Test(unittest.TestCase):
         stmt = result[0]
         self.assertTrue(isinstance(stmt, UpdateStatement))
 
-#    def testUpdateDrop(self):
-#        result = self.parse('stmts', 'UPDATE buffer SET a = 1 DROP c WHERE b = 2;')
+    def testUpdateDrop(self):
+        result = self.parse('stmts', 'UPDATE buffer SET a = 1 DROP c WHERE b = 2;')
+        self.assertTrue(result is not None)
+        stmt = result[0]
+        self.assertTrue(isinstance(stmt, UpdateStatement))
 
     def testBasicInsert(self):
         result = self.parse('stmts', 'INSERT INTO stdout SELECT * FROM buff;')
@@ -416,18 +419,48 @@ class Test(unittest.TestCase):
           FROM PosSpeedStr [NOW];
         ''')
         self.assertTrue(result is not None)
+
+        result = self.parse('stmts', '''
+          SELECT * FROM input1 [UNBOUNDED];
+        ''')
+        self.assertTrue(result is not None)
+        
+        result = self.parse('stmts', '''
+          SELECT * FROM input1[RANGE 360 SECONDS];
+        ''')
+        self.assertTrue(result is not None)
+        
+        result = self.parse('stmts', '''
+          SELECT * FROM input1[ROWS 50];
+        ''')
+        self.assertTrue(result is not None)
+
+        result = self.parse('stmts', '''
+          SELECT * FROM input1[PARTITION BY a.b, c ROWS 50];
+        ''')
+        self.assertTrue(result is not None)
+
     
     def testJoin(self):
         
-#        result = self.parse('stmts', '''
-#          SELECT
-#            *
-#          FROM
-#            table1 AS t1,
-#            stream1[ROWS 10] AS t1.bla,
-#            stream2[NOW] AS blup;
-#        ''')
-        pass
+        result = self.parse('stmts', '''
+          SELECT
+            *
+          FROM
+            table1 AS t1,
+            stream1[ROWS 10] AS t1.bla,
+            stream2[NOW] AS blup;
+        ''')
+        self.assertTrue(result is not None)
+    
+        excp = False
+        try:
+            result = self.parse('''stmts''', '''
+                SELECT * FROM bla AS hello+1;
+            ''')
+        except SyntaxError:
+            excp = True
+        self.assertTrue(excp)
     
 #    def testGroupBy(self):
 #        result = self.parse('stmts', '''
