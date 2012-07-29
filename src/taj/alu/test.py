@@ -1,5 +1,6 @@
 
 from datetime import date, timedelta
+from logging import basicConfig
 from taj.alu.any import StackALU
 from taj.alu.visit import ExpressionEvalBuilder, LogicBuilder
 from taj.exception import UnknownFunction
@@ -7,6 +8,7 @@ from taj.parser.MFQLLexer import MFQLLexer
 from taj.parser.MFQLParser import MFQLParser
 import antlr3
 import logging
+import logging.config as logConf
 import unittest
 
 class CompositeBuilder(object):
@@ -47,6 +49,7 @@ class Test(unittest.TestCase):
         self.parse
         self.alu = StackALU()
         #self.alu = VerboseAlu(self.alu)
+        basicConfig(level=logging.NOTSET)
 
     def parse(self, rule, input):
         char_stream = antlr3.ANTLRStringStream(input)

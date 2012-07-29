@@ -3,12 +3,17 @@ from taj.alu.base import ALU
 from taj.exception import InternalError, UnknownFunction, InvalidFunctionArity
 from taj.logic import Comparaison
 from types import IntType, FloatType, NoneType
+import datetime
 import logging
 import taj.alu.function as function
 
 log = logging.getLogger(__name__)
 
 class Operator(object):
+    '''
+    an abstract class which can be implemented to represent arithmetic with
+    certain types.
+    '''
     
     def __init__(self):
         super(Operator, self).__init__()
@@ -48,6 +53,9 @@ class Operator(object):
         return str(value1) == str(value2)
 
 class AnyOperator(Operator):
+    '''
+    arithmetic for unknown types. it simply uses python conventions.
+    '''
 
     def nagateAtom(self, value):
         return - value
@@ -70,7 +78,10 @@ class AnyOperator(Operator):
     def modAtom(self, value1, value2):
         return value1 % value2
 
-class NoneOperator(Operator):
+class NullOperator(Operator):
+    '''
+    arithmetic for the NULL type.
+    '''
 
     def nagateAtom(self, value):
         return None
@@ -99,6 +110,9 @@ class NoneOperator(Operator):
         return None
 
 class NumberOperator(Operator):
+    '''
+    arithmetic involving numbers.
+    '''
 
     def nagateAtom(self, value):
         return -value
@@ -164,9 +178,10 @@ class StackALU(ALU):
     '''
     
     operators = {
-        NoneType: NoneOperator(),
-        IntType: NumberOperator(),
-        FloatType: NumberOperator()
+        NoneType:  NullOperator(),
+        IntType:   NumberOperator(),
+        FloatType: NumberOperator(),
+        #datetime.date: DateOperator(),
     }
     defaultOperator = AnyOperator()
 
